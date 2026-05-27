@@ -14,12 +14,13 @@ style: |
   li { margin-bottom: 6px; }
   strong { color: #0f172a; font-weight: 700; }
   pre { margin: 12px 0; padding: 15px 18px; border-radius: 12px; background: #0f172a; color: #e5e7eb; font-size: 18px; line-height: 1.25; }
+  code { font-size: 0.9em; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
   table { width: 100%; font-size: 19px; border-collapse: collapse; }
   th { background: #e0f2fe; color: #0f172a; }
   th, td { padding: 8px 10px; border: 1px solid #cbd5e1; vertical-align: top; }
   tr:nth-child(even) td { background: #f1f5f9; }
   .lead { text-align: center; }
-  .lead h1 { position: static; margin: 0 auto 24px auto; padding: 0; border: none; font-size: 46px; line-height: 1.2; }
+  .lead h1 { position: static; margin: 0 auto 24px auto; padding: 0; border: none; font-size: 48px; line-height: 1.2; }
   .lead h2 { font-size: 28px; color: #1e3a8a; }
   .subtitle { color: #475569; font-size: 23px; }
   .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; align-items: start; }
@@ -33,7 +34,7 @@ style: |
 
 # OpenClaw入門
 
-## 社内オンプレPoCで見えてきた、AIエージェント基盤の使いどころ
+## ChatGPTとの違いから、常駐AI秘書の仕組みを理解する
 
 <div class="subtitle">社内エンジニア勉強会 / 20分</div>
 
@@ -41,452 +42,458 @@ style: |
 
 # 今日のゴール
 
-## OpenClawを構造で理解する
+## OpenClawとは何かを、まず正しく捉える
 
-今日持ち帰ってほしいことは3つです。
+この資料で扱うこと：
 
-1. **OpenClawはAIモデル本体ではなく、Gatewayを中心にしたエージェント基盤**である
-2. **Claude Code / Codexとは主戦場が違う**。開発専用というより、チャネル・ツール・社内情報源をつなぐ基盤
-3. 社内では、**GitLab・共有フォルダ・Obsidian・Symphonyに接続したときに価値が出る**
+1. OpenClawとChatGPTの違い
+2. OpenClawが「AI本体」ではなく「Gateway」であること
+3. セッション、メモリ、チャネル、ツールの考え方
+4. インストールからDashboard / TUI / CLIを使うまでの流れ
+5. 安全に使うための注意点
 
-<div class="message">キーワードは「常駐」「Gateway」「社内情報源への接続」。</div>
+<div class="message">OpenClawは、AIに質問するアプリではなく、AIエージェントを自分の環境に常駐させる基盤。</div>
 
 ---
 
-# ChatGPTと何が違うのか
+# OpenClawとは
+
+## セルフホスト型のAIアシスタント基盤
+
+OpenClawは、普段使っているチャットアプリなどからAIに指示し、設定した権限やツール連携に応じて作業させるための基盤。
+
+扱えるものの例：
+
+- チャットアプリからの指示
+- メール、カレンダー
+- ブラウザ
+- ファイル操作
+- 定期実行
+- ツール連携
+
+<div class="message">ChatGPTが「AIと会話する場所」なら、OpenClawは「自分の環境に常駐するAI秘書を作る仕組み」。</div>
+
+---
+
+# ChatGPTとの違い
 
 <div class="two-columns">
 <div class="card">
 
 ## ChatGPT
 
-- AIと会話する場所
-- すぐ使える完成済みサービス
-- 文章作成、要約、調査、コード支援に強い
-- 基本はユーザーが画面を開いて依頼する
+- 完成済みのAIサービス
+- 画面を開いてAIと会話する
+- 文章、コード、調査、要約、ファイル分析などを扱える
+- すぐに使えることが強み
 
 </div>
 <div class="card">
 
 ## OpenClaw
 
-- 自分の環境にAIを常駐させる仕組み
-- チャット、CLI、Dashboard、外部チャネルから使う
-- ツールや権限を設計して動かす
-- 普段の業務環境にAIを入れる
+- AIアシスタントを動かす基盤
+- チャネル、スキル、メモリ、ツールを組み合わせる
+- 自分の用途に合わせて設計する
+- 常駐エージェントとして動かせる
 
 </div>
 </div>
 
-<div class="message">ChatGPTは「AIがいるアプリ」。OpenClawは「自分の環境にAI秘書を作る基盤」。</div>
+<div class="message">ChatGPTは「会話・作業支援のサービス」。OpenClawは「実行型エージェントの基盤」。</div>
 
 ---
 
-# OpenClawの基本イメージ
+# OpenClawはAI本体ではない
 
-## 中心にいるのはGateway
+## 重要なのはGatewayという考え方
 
-```text
-利用者
-  ↓
-Dashboard / CLI / TUI / Symphony / Slack / Discord
-  ↓
-OpenClaw Gateway
-  ↓
-Agent / Session / Memory / Skills / Tools
-  ↓
-LLM API / ローカルモデル / MCP / 社内API / ファイル / Shell
+OpenClaw自体は巨大なAIモデルではない。
+
+外部LLM、ローカル/クラウドのモデル設定、チャットチャネル、ツール実行環境を組み合わせて、AIアシスタントを動かす基盤。
+
+```mermaid
+flowchart TD
+    C[チャットアプリ / Dashboard / CLI / TUI] --> G[OpenClaw Gateway]
+    G --> A[AIエージェント]
+    A --> L[外部LLM / ローカルモデル]
+    A --> T[ツール実行環境]
+    T --> F[ファイル / ブラウザ / メール / カレンダー]
+    A --> G
+    G --> C
 ```
 
-<div class="message">OpenClawは、複数の入口と複数の道具を束ねて、AIエージェントに渡す制御プレーン。</div>
+---
+
+# Gatewayの役割
+
+## セッション、ルーティング、チャネル接続を管理する制御プレーン
+
+Gatewayが行うこと：
+
+- SlackやDiscordなどから届いたメッセージを受け取る
+- どの会話の続きかを判断する
+- 適切なAIエージェント、スキル、ツールへ振り分ける
+- 処理結果を元のチャットへ返す
+
+<div class="message">OpenClawは、いろいろなチャットアプリをAIの受付窓口に変えるルーターのようなもの。</div>
 
 ---
 
-# Gatewayとは何か
+# OpenClawの体験
 
-## OpenClawをCLIツールだけだと思うと分かりづらい
+## 新しいAIアプリを開くのではなく、普段の場所にAIがいる
 
-Gatewayは、OpenClawの中心で常駐するプロセスです。
+```mermaid
+flowchart LR
+    U[ユーザー] --> S[Slack / Discord / Telegram / WhatsApp]
+    S --> G[OpenClaw Gateway]
+    G --> E[AIエージェント]
+    E --> G
+    G --> S
+    S --> U
+```
 
-主な役割：
+ユーザーは、ChatGPTの画面を開く代わりに、普段使っているチャット空間からAIに話しかける。
 
-- **どこから来た依頼か**を受け取る
-- **どのセッションの続きか**を管理する
-- **どのエージェント・ツールに渡すか**を決める
-- **処理結果を元のチャネルへ返す**
-
-<div class="note">OpenClawは「ターミナルでAIと会話するツール」ではなく、Dashboard・CLI・TUI・チャット連携がGatewayにつながる構成。</div>
+<div class="message">OpenClawの面白さは、AIが普段の会話空間に常駐する体験にある。</div>
 
 ---
 
-# 主要要素
+# セッション
 
-<div class="three-columns">
-<div class="card">
+## AIが「どの会話の続きか」を判断する単位
 
-## Channel
+OpenClawでは、会話はセッションとして管理される。
 
-AIへの入口。
+ChatGPTのチャットスレッドに近いが、複数のサービスから話しかけられるため、考え方が少し違う。
 
+セッション分離の例：
+
+- DM
+- グループチャット
+- ルーム / チャンネル
+- 定期実行
+- Webhook経由の処理
+
+<div class="message">複数の入口があるからこそ、文脈が混ざらないようにセッション設計が重要。</div>
+
+---
+
+# チャネルとセッションの違い
+
+## 「チャネル」はAIに接続する入口
+
+OpenClawでいうチャネルは、AIに接続するサービスのこと。
+
+例：
+
+- Slack
+- Discord
+- Telegram
+- WhatsApp
 - Dashboard
 - CLI / TUI
-- Symphony
-- Slack / Discord
+
+一方で、Slackのチャンネルは `#general` や `#project-a` のような、Slack内の会話場所を指す。
+
+<div class="note">OpenClawでは、送信元チャネル、送信者、アカウントなどをもとにセッションを分けられる。</div>
+
+---
+
+# メモリ
+
+## エージェントが作業を継続するためのノート
+
+OpenClawのメモリは、エージェントが作業文脈を引き継ぐための仕組み。
+
+保持するものの例：
+
+- 長期記憶
+- 日次メモ
+- 作業ログ
+- 会話履歴
+- 以前の作業文脈
+
+<div class="message">ChatGPTのメモリがユーザーの好みを覚える機能に寄りがちな一方、OpenClawのメモリは作業を継続するための文脈保持に近い。</div>
+
+---
+
+# OpenClawの強み
+
+## 普段のチャットアプリから使える
+
+ChatGPTのように専用画面を開くのではなく、仕事やコミュニティで使っているチャットアプリからそのままAIに話しかけられる。
+
+<div class="message">AIが新しい場所にあるのではなく、普段の会話空間に入ってくる。</div>
+
+---
+
+# OpenClawの強み
+
+## 常駐エージェントとして動かせる
+
+OpenClawは、自分のPCやサーバー上で動かすAIエージェント基盤。
+
+必要なときに質問するだけでなく、常に待機させておき、設定したツールや権限の範囲で作業させられる。
+
+例：
+
+- メール
+- 予定
+- 通知
+- ブラウザ操作
+- ファイル操作
+- 定期実行
+
+---
+
+# OpenClawの強み
+
+## 自分の環境に合わせて拡張できる
+
+OpenClawでは、以下を組み合わせて自分用のAI秘書を作る。
+
+- チャネル
+- スキル
+- ツール
+- メモリ
+- MCP
 - Webhook
 
-</div>
-<div class="card">
-
-## Session / Memory
-
-文脈を保つ仕組み。
-
-- 会話の続き
-- 作業履歴
-- 長期メモ
-- 日次ログ
-
-</div>
-<div class="card">
-
-## Tools / Skills
-
-AIの手足。
-
-- File
-- Shell
-- Browser
-- MCP
-- 社内API
-
-</div>
-</div>
-
-<div class="message">入口、文脈、道具を組み合わせて、自分たち用のAIエージェントを作る。</div>
+<div class="message">ChatGPTが完成されたAIサービスなら、OpenClawは自分のワークフローに合わせて組み立てるAI作業場。</div>
 
 ---
 
-# セッション：会話の混線を防ぐ単位
+# OpenClawの強み
 
-## チャット連携では特に重要
+## チームやコミュニティでも使える
 
-OpenClawでは、会話や作業の文脈を**セッション**として扱います。
+OpenClawは個人用のAI秘書としてだけでなく、Slack BotやDiscord Botのようなチャットエージェントとしても使える。
 
-たとえば、Symphony連携を考えると：
+例：
 
-- 個人DMの会話
-- グループチャットの会話
-- ルームごとの会話
-- 定期実行の会話
-- Webhook経由の会話
+- チームのSlackに置く
+- DiscordコミュニティにAI Botとして参加させる
+- チャットからAIに質問できるようにする
 
-<div class="message">社内利用では「誰が・どのチャットで・どの目的で話しているか」を分ける設計が大事。</div>
+<div class="note">ただし、共有利用や複数人利用では追加のロックダウンが必要。</div>
 
 ---
 
-# メモリ：作業を継続させるノート
+# 必要なもの
 
-## 単なるプロフィール記憶ではない
+## OpenClawを使う前に用意するもの
 
-OpenClawのメモリは、AI秘書が作業を継続するためのノートに近いです。
-
-使い方のイメージ：
-
-- PoCの進捗を覚える
-- 日次の作業ログを残す
-- 以前調べた結論を再利用する
-- よく使う社内システムや手順を保持する
-
-<div class="note">Obsidian VaultやGitLab Issueと組み合わせることで、人間の検討履歴とAIの作業履歴をつなぎやすくなる。</div>
+- Node.js
+  - Node 24 推奨
+- モデルプロバイダの認証情報
+  - OpenAI APIキー
+  - Anthropic APIキー
+  - xAI APIキー
+  - OpenAI ChatGPT / xAIのブラウザログイン
+  - その他、OpenClawが対応するプロバイダ
 
 ---
 
-# 始め方：まずは動かして構造を見る
+# インストール
 
-## 最小の確認ポイント
+## macOS / Linux / WSL2
 
-```text
-1. インストール
-2. オンボーディング
-3. Gateway起動確認
-4. Dashboardを開く
-5. TUI / CLIで会話する
-6. チャネルやツールを追加する
+```bash
+curl -fsSL https://openclaw.ai/install.sh | bash
 ```
 
-確認すること：
+## Windows PowerShell
 
-- Gatewayが動いているか
-- Dashboardから会話できるか
-- どのモデルを使っているか
-- セッションがどう管理されるか
-- ツール実行がどこまで許可されているか
-
----
-
-# Dashboard / CLI / TUI の位置づけ
-
-| 入口 | 役割 | 社内PoCでの見方 |
-|---|---|---|
-| Dashboard | 管理画面・チャット・設定確認 | 状態確認、デモ、実行承認の確認に向く |
-| TUI | ターミナル上の対話UI | 開発者が手元で試すのに向く |
-| CLI | 1回限りの実行・スクリプト連携 | Symphony Bridgeなどの自動連携に向く |
-| Chat Channel | Slack/Symphony等から利用 | 利用者体験として一番自然 |
-
-<div class="message">社内利用で重要なのは、専用画面を開かず、普段のチャットやワークフローから使えること。</div>
-
----
-
-# Claude Code / Codex とは何が違うのか
-
-| 観点 | Claude Code / Codex | OpenClaw |
-|---|---|---|
-| 主戦場 | コーディング | 常駐型エージェント基盤 |
-| 中心 | リポジトリ・作業ディレクトリ | Gateway・チャネル・セッション |
-| 得意 | コード読解、修正、テスト | 複数入口・複数ツール・社内情報源の接続 |
-| 使い方 | 開発者がCLI/IDEで使う | チャット、Dashboard、CLI、Webhookから使う |
-| 社内価値 | 個人の開発生産性 | チームの業務文脈への接続 |
-
----
-
-# 比較の結論
-
-## 優劣ではなく、役割が違う
-
-<div class="two-columns">
-<div class="card">
-
-## Claude Code / Codex
-
-**コードを書く・直す**ためのエージェント。
-
-- 既存コードの理解
-- バグ修正
-- テスト実行
-- 差分作成
-
-</div>
-<div class="card">
-
-## OpenClaw
-
-**社内環境につないで動く**ためのエージェント基盤。
-
-- チャット連携
-- 定期実行
-- 社内情報源の横断
-- ツール・権限設計
-
-</div>
-</div>
-
-<div class="message">コーディング単体ならClaude Code / Codex。社内情報源をつないだ常駐エージェントならOpenClaw。</div>
-
----
-
-# 社内PoCで見たい価値
-
-## 一般的なデモではなく、社内にしかない情報を扱う
-
-世の中のデモ：
-
-- ログを読む
-- コードを修正する
-- Todoアプリを作る
-- Webで調べる
-
-社内で本当に見たいもの：
-
-- GitLabのREADME・Issue・Commitを読む
-- 共有フォルダの資料を探す
-- Obsidian Vaultの検討メモを整理する
-- Symphonyから依頼して、元のチャットに返す
-
-<div class="message">OpenClawの価値は、社内情報に接続した瞬間に一段上がる。</div>
-
----
-
-# 社内システム連携のイメージ
-
-```text
-Symphony
-  ↓ メッセージ受信
-Python Bridge
-  ↓ openclaw agent --message
-OpenClaw Gateway / Agent
-  ↓
-Tools
-  ├─ GitLab
-  ├─ Shared Folder
-  ├─ Obsidian Vault
-  └─ Local Scripts
-  ↓
-Python Bridge
-  ↓ send_message
-Symphony
-```
-
-<div class="note">ポイントは、OpenClawを「チャットに表示するだけ」ではなく、社内情報源を調査して、結果を元のチャットへ戻すこと。</div>
-
----
-
-# ユースケース1：GitLab調査
-
-## 新しく担当するシステムを理解する
-
-依頼例：
-
-```text
-この機能に関係するリポジトリと最近の変更を調べて。
-README、Issue、最近のcommitを見て、影響範囲と次に確認すべき点をまとめて。
-```
-
-出力イメージ：
-
-- 関連リポジトリ
-- 重要なREADME記述
-- 最近の変更内容
-- 影響しそうなファイル
-- 未解決Issue
-- 次に確認すべきログや設定
-
----
-
-# ユースケース2：共有フォルダ探索
-
-## 「あの資料どこだっけ」を減らす
-
-依頼例：
-
-```text
-米国雇用統計の説明に使えそうな過去資料を探して。
-最新版、流用できそうな図表、勉強会向けに使える説明を分けてまとめて。
-```
-
-価値：
-
-- ファイル名だけでなく中身を見て探せる
-- 最新版と古い版を区別できる
-- 流用しやすい資料を候補にできる
-- 探す時間を減らせる
-
----
-
-# ユースケース3：Obsidian Vault整理
-
-## 思考履歴を再利用する
-
-依頼例：
-
-```text
-OpenClaw PoCに関する過去メモを整理して。
-現在の構成、詰まった点、意思決定の理由、次にやることをまとめて。
-```
-
-価値：
-
-- 検討メモが埋もれにくい
-- 途中の失敗や判断理由を再利用できる
-- 新規参加者への説明資料に変換できる
-- GitLabや共有フォルダと合わせて文脈を復元できる
-
----
-
-# デモ案：PoC状況を横断整理する
-
-## OpenClaw自身に、OpenClaw PoCを説明させる
-
-```text
-OpenClaw PoCの現状を、新しく参加した人向けに説明できるようにまとめて。
-
-確認対象：
-- GitLabのREADME、Issue、最近のcommit
-- Obsidian Vault内の設計メモ
-- 共有フォルダ内の説明資料
-
-観点：
-1. 目的
-2. 現在の構成
-3. できていること
-4. 未解決課題
-5. 次にやること
+```powershell
+iwr -useb https://openclaw.ai/install.ps1 | iex
 ```
 
 ---
 
-# デモで見せたいポイント
+# オンボーディング
 
-## すごいのは文章生成ではなく、文脈の再構成
+## 初期設定ウィザード
 
-OpenClawがやっていること：
+手動で実行する場合：
 
-1. 複数の社内情報源を見る
-2. 最新情報と過去の検討経緯を分ける
-3. 目的・構成・課題・次アクションに整理する
-4. 新規参加者向けに説明可能な形へ変換する
+```bash
+openclaw onboard --install-daemon
+```
 
-<div class="message">これは検索ではなく、社内に散らばった業務文脈を復元する作業。</div>
+オンボーディングで設定するもの：
 
----
-
-# 社内利用での前提
-
-## 今回は現実的なPoCに寄せる
-
-今回の前提：
-
-- OpenClawはコンテナ内の閉鎖環境で稼働
-- 接続先は限定する
-- LLM APIへのアップロードは了承済み
-- 当部は投資部門であり、顧客情報を直接扱う環境ではない
-- まずは読み取り系を中心に検証する
-
-<div class="note">複数人利用や強い権限を持つツール実行では、ユーザー・チャネル・ツール・実行範囲の制限が必要。</div>
+- セットアップモード
+- モデル / 認証プロバイダ
+- ワークスペース
+- Gateway設定
+- チャネル設定
+- スキル設定
+- Gatewayをデーモンとして起動するかどうか
 
 ---
 
-# どこから始めるべきか
+# Gatewayの状態確認
 
-## 最初に任せるのは「判断」ではなく「調査と整理」
+## まずGatewayが動いているか確認する
 
-| 始めやすい | 後回し |
-|---|---|
-| 読み取り専用 | 本番変更 |
-| 調査補助 | 自動デプロイ |
-| 要約 | Git push |
-| 影響範囲整理 | 権限の強い操作 |
-| オンボーディング資料作成 | 重要判断の自動化 |
+```bash
+openclaw gateway status
+```
 
-<div class="message">まずは、低リスクで効果が見えやすい「読む・探す・まとめる」から始める。</div>
+Gatewayが動いていない場合：
+
+```bash
+openclaw gateway start
+openclaw gateway status
+```
+
+設定やサービス状態を確認する場合：
+
+```bash
+openclaw doctor
+```
+
+<div class="message">OpenClawでは、CLIだけが主役ではなく、Gatewayが中心にいる。</div>
+
+---
+
+# Dashboard
+
+## ブラウザで開くControl UI
+
+Dashboardは、ローカルGatewayに接続して使う管理画面。
+
+できること：
+
+- チャット
+- 設定確認
+- セッション確認
+- チャネル連携
+- 実行承認
+
+起動：
+
+```bash
+openclaw dashboard
+```
+
+URL：
+
+```text
+http://127.0.0.1:18789/
+```
+
+---
+
+# デバイスペアリング
+
+## 新しいブラウザやデバイスから接続する場合
+
+Dashboard初回接続時には、デバイスペアリングが必要になることがある。
+
+```bash
+openclaw devices list
+openclaw devices approve <requestId>
+```
+
+Dashboardで確認するポイント：
+
+- Gatewayに接続できているか
+- チャット欄から送信できるか
+- エージェントから返答があるか
+- モデルやセッション状態が見えるか
+- 設定やチャネル連携項目が見えるか
+
+---
+
+# TUI
+
+## ターミナル上でGatewayに接続して対話する
+
+```bash
+openclaw tui
+```
+
+Gatewayなしのローカルモード：
+
+```bash
+openclaw tui --local
+```
+
+TUIでできること：
+
+- エージェントに質問する
+- 接続先、エージェント、セッションを確認する
+- モデルを切り替える
+- セッションを切り替える
+- 実行中の応答を中断する
+
+---
+
+# TUIの基本操作
+
+## よく使う操作とスラッシュコマンド
+
+操作：
+
+- Enter：メッセージ送信
+- Esc：実行中の応答を中断
+- Ctrl+C：入力クリア。2回押すと終了
+
+コマンド：
+
+- `/help`：コマンド一覧
+- `/status`：現在の状態
+- `/agent`：エージェント確認・切替
+- `/session`：セッション確認・切替
+- `/model`：モデル確認・切替
+- `/new` / `/reset`：セッション開始・リセット
+- `/exit`：終了
+
+---
+
+# CLIから1回だけ実行する
+
+## スクリプトや外部連携に使いやすい
+
+CLIから1回だけメッセージを送る場合：
+
+```bash
+openclaw agent --message "今のOpenClawの状態を簡単に説明して"
+```
+
+<div class="message">Dashboard、TUI、CLI、チャットアプリがGatewayにつながる。これが普通のCLI型AIエージェントとの大きな違い。</div>
+
+---
+
+# セキュリティ面の注意
+
+## 実際の作業環境に触れるため、権限設計が重要
+
+OpenClawは、設定次第でメール、カレンダー、ファイル、ブラウザ、チャットアプリなどに触れる。
+
+注意点：
+
+- 誰が話しかけられるか
+- どのチャンネルで使えるか
+- どのツールを実行できるか
+- 外部LLM APIへ何が送られるか
+- ログ保存、APIキー管理、アクセス権限
+
+<div class="message">安全に使うには、チャネル、ユーザー、ツール、実行範囲を絞り、必要に応じて人間の確認を挟む。</div>
 
 ---
 
 # まとめ
 
-今日の結論：
+## OpenClawとは何か
 
-1. OpenClawは、AIモデル本体ではなく**Gateway中心の常駐エージェント基盤**
-2. ChatGPTやClaude Code / Codexとは違い、**チャネル・セッション・ツール・社内情報源をつなぐ設計**が主役
-3. 社内では、GitLab・共有フォルダ・Obsidian・Symphonyを横断して、**業務文脈を再構成する用途**が強い
-4. 最初は、読み取り専用の調査・整理・オンボーディング支援から始めるのが現実的
+1. OpenClawは、AIに質問するツールというより、**常駐するAIエージェントを作る基盤**
+2. 中心には**Gateway**があり、チャネル、セッション、ルーティング、ツール実行をつなぐ
+3. ChatGPTとの違いは、完成済みAIサービスではなく、**自分の環境に合わせて組み立てるAI作業場**であること
+4. Dashboard、TUI、CLI、チャットアプリから使える
+5. 実際の作業環境に触れるため、権限と安全設計が重要
 
-<div class="message">OpenClawは、AIに仕事を丸投げする道具ではなく、人間の判断を助けるために社内情報をつなぐ作業基盤。</div>
-
----
-
-# 議論したいこと
-
-## 自分たちの業務なら、何を読ませたいか
-
-候補：
-
-- GitLab
-- 共有フォルダ
-- 手順書
-- Obsidian Vault
-- 過去の障害対応メモ
-- 定例資料
-- 部内スクリプト
-- Symphonyの特定ルーム
-
-<div class="message">まず読み取り専用で任せるなら、どの作業が安全で効果が大きいか。</div>
+<div class="message">OpenClawは、普段のチャット空間に常駐するAI秘書を、自分の環境で作るための仕組み。</div>
