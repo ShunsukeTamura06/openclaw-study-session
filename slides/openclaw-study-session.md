@@ -220,21 +220,7 @@ CLI / IDE が入口。
 </div>
 <div>
 
-```text
-[Symphony DM] @assistant
-"先週の障害対応メモを要約して"
-        │
-        ▼
-   OpenClaw Gateway
-   ├─ session: user-A / DM
-   ├─ memory: 過去の会話・作業ログ
-   ├─ tools : obsidian_search, fs_read
-   └─ LLM   : 要約・整形
-        │
-        ▼
-[Symphony DM] 返信:
-"先週の障害対応(3件)の要約は…"
-```
+![w:540 channel sequence](diagrams/sequence-channel.svg)
 
 </div>
 </div>

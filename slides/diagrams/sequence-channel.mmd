@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant U as ユーザー
+    participant Ch as Symphony<br/>(チャネル)
+    participant GW as OpenClaw<br/>Gateway
+    participant L as LLM
+
+    U->>Ch: "先週の障害対応メモを要約して"
+    Ch->>GW: 依頼を受信
+    Note over GW: session: user-A / DM<br/>memory: 過去の会話・作業ログ<br/>tools: obsidian_search, fs_read
+    GW->>L: 関連情報を渡して要約依頼
+    L-->>GW: 要約結果
+    GW->>Ch: 返信
+    Ch-->>U: "先週の障害対応(3件)の要約は…"
