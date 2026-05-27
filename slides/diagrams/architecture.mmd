@@ -1,19 +1,40 @@
 flowchart LR
-    U[ユーザー] --> C[チャネル<br/>Chat / Web UI / CLI]
-    C <--> G[OpenClaw<br/>Gateway]
-    G --> S[セッション管理]
-    G --> A[AIエージェント]
-    A --> M[メモリ]
-    A --> T[ツール / スキル]
-    A --> L[LLM API]
-    T --> X[社内サービス<br/>GitLab / 共有フォルダ<br/>Obsidian など]
+    U[ユーザー]
+
+    subgraph OC ["OpenClaw"]
+        direction LR
+        C[チャネル<br/>Chat / Web UI / CLI]
+        G[Gateway]
+        S[セッション管理]
+        A[AIエージェント]
+        M[メモリ]
+        T[ツール / スキル]
+        SB[サンドボックス]
+        L[LLM API]
+    end
+
+    X[社内サービス<br/>GitLab / 共有フォルダ<br/>Obsidian など]
+
+    U --> C
+    C <--> G
+    G --> S
+    G --> A
+    A --> M
+    A --> T
+    A --> L
+    T --> SB
+    SB --> X
 
     classDef external fill:#e2e8f0,stroke:#475569,color:#1f2937
     classDef channel  fill:#dbeafe,stroke:#2563eb,color:#0f172a
     classDef gateway  fill:#fcd34d,stroke:#b45309,color:#0f172a,stroke-width:3px,font-weight:bold
     classDef internal fill:#c7d2fe,stroke:#4338ca,color:#1f2937
+    classDef sandbox  fill:#bbf7d0,stroke:#166534,color:#1f2937
 
     class U,X external
     class C channel
     class G gateway
     class S,A,M,T,L internal
+    class SB sandbox
+
+    style OC fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:5 5,color:#475569
