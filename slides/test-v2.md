@@ -49,7 +49,7 @@ style: |
 1. OpenClawとChatGPTの違い
 2. OpenClawが「AI本体」ではなく「Gateway」であること
 3. セッション、メモリ、チャネル、ツールの考え方
-4. インストールからDashboard / TUI / CLIを使うまでの流れ
+4. 常駐AI秘書として何ができるのか
 5. 安全に使うための注意点
 
 <div class="message">OpenClawは、AIに質問するアプリではなく、AIエージェントを自分の環境に常駐させる基盤。</div>
@@ -219,6 +219,24 @@ OpenClawのメモリは、エージェントが作業文脈を引き継ぐため
 
 ---
 
+# ツールとスキル
+
+## AIに「できること」を与える仕組み
+
+OpenClawでは、AIにただ返答させるだけでなく、ツールやスキルを通じて作業手段を与える。
+
+例：
+
+- ファイルを読む
+- ブラウザを扱う
+- メールやカレンダーを見る
+- 外部APIと連携する
+- 定期的な処理を行う
+
+<div class="message">LLMの知能に、現実の作業環境へ触れる手段を足すのがOpenClawの考え方。</div>
+
+---
+
 # OpenClawの強み
 
 ## 普段のチャットアプリから使える
@@ -281,193 +299,6 @@ OpenClawは個人用のAI秘書としてだけでなく、Slack BotやDiscord Bo
 
 ---
 
-# 必要なもの
-
-## OpenClawを使う前に用意するもの
-
-- Node.js
-  - Node 24 推奨
-- モデルプロバイダの認証情報
-  - OpenAI APIキー
-  - Anthropic APIキー
-  - xAI APIキー
-  - OpenAI ChatGPT / xAIのブラウザログイン
-  - その他、OpenClawが対応するプロバイダ
-
----
-
-# インストール
-
-## macOS / Linux / WSL2
-
-```bash
-curl -fsSL https://openclaw.ai/install.sh | bash
-```
-
-## Windows PowerShell
-
-```powershell
-iwr -useb https://openclaw.ai/install.ps1 | iex
-```
-
----
-
-# オンボーディング
-
-## 初期設定ウィザード
-
-手動で実行する場合：
-
-```bash
-openclaw onboard --install-daemon
-```
-
-オンボーディングで設定するもの：
-
-- セットアップモード
-- モデル / 認証プロバイダ
-- ワークスペース
-- Gateway設定
-- チャネル設定
-- スキル設定
-- Gatewayをデーモンとして起動するかどうか
-
----
-
-# Gatewayの状態確認
-
-## まずGatewayが動いているか確認する
-
-```bash
-openclaw gateway status
-```
-
-Gatewayが動いていない場合：
-
-```bash
-openclaw gateway start
-openclaw gateway status
-```
-
-設定やサービス状態を確認する場合：
-
-```bash
-openclaw doctor
-```
-
-<div class="message">OpenClawでは、CLIだけが主役ではなく、Gatewayが中心にいる。</div>
-
----
-
-# Dashboard
-
-## ブラウザで開くControl UI
-
-Dashboardは、ローカルGatewayに接続して使う管理画面。
-
-できること：
-
-- チャット
-- 設定確認
-- セッション確認
-- チャネル連携
-- 実行承認
-
-起動：
-
-```bash
-openclaw dashboard
-```
-
-URL：
-
-```text
-http://127.0.0.1:18789/
-```
-
----
-
-# デバイスペアリング
-
-## 新しいブラウザやデバイスから接続する場合
-
-Dashboard初回接続時には、デバイスペアリングが必要になることがある。
-
-```bash
-openclaw devices list
-openclaw devices approve <requestId>
-```
-
-Dashboardで確認するポイント：
-
-- Gatewayに接続できているか
-- チャット欄から送信できるか
-- エージェントから返答があるか
-- モデルやセッション状態が見えるか
-- 設定やチャネル連携項目が見えるか
-
----
-
-# TUI
-
-## ターミナル上でGatewayに接続して対話する
-
-```bash
-openclaw tui
-```
-
-Gatewayなしのローカルモード：
-
-```bash
-openclaw tui --local
-```
-
-TUIでできること：
-
-- エージェントに質問する
-- 接続先、エージェント、セッションを確認する
-- モデルを切り替える
-- セッションを切り替える
-- 実行中の応答を中断する
-
----
-
-# TUIの基本操作
-
-## よく使う操作とスラッシュコマンド
-
-操作：
-
-- Enter：メッセージ送信
-- Esc：実行中の応答を中断
-- Ctrl+C：入力クリア。2回押すと終了
-
-コマンド：
-
-- `/help`：コマンド一覧
-- `/status`：現在の状態
-- `/agent`：エージェント確認・切替
-- `/session`：セッション確認・切替
-- `/model`：モデル確認・切替
-- `/new` / `/reset`：セッション開始・リセット
-- `/exit`：終了
-
----
-
-# CLIから1回だけ実行する
-
-## スクリプトや外部連携に使いやすい
-
-CLIから1回だけメッセージを送る場合：
-
-```bash
-openclaw agent --message "今のOpenClawの状態を簡単に説明して"
-```
-
-<div class="message">Dashboard、TUI、CLI、チャットアプリがGatewayにつながる。これが普通のCLI型AIエージェントとの大きな違い。</div>
-
----
-
 # セキュリティ面の注意
 
 ## 実際の作業環境に触れるため、権限設計が重要
@@ -493,7 +324,7 @@ OpenClawは、設定次第でメール、カレンダー、ファイル、ブラ
 1. OpenClawは、AIに質問するツールというより、**常駐するAIエージェントを作る基盤**
 2. 中心には**Gateway**があり、チャネル、セッション、ルーティング、ツール実行をつなぐ
 3. ChatGPTとの違いは、完成済みAIサービスではなく、**自分の環境に合わせて組み立てるAI作業場**であること
-4. Dashboard、TUI、CLI、チャットアプリから使える
+4. 普段のチャットアプリや複数の入口から使える
 5. 実際の作業環境に触れるため、権限と安全設計が重要
 
 <div class="message">OpenClawは、普段のチャット空間に常駐するAI秘書を、自分の環境で作るための仕組み。</div>
