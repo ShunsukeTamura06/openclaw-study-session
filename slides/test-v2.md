@@ -34,7 +34,7 @@ style: |
 
 # OpenClaw入門
 
-## Coding Agentではなく、常駐AI秘書のGatewayとして理解する
+## ChatGPTとの違いから、常駐AI秘書の仕組みを理解する
 
 <div class="subtitle">社内エンジニア勉強会 / 20分</div>
 
@@ -42,17 +42,18 @@ style: |
 
 # 今日のゴール
 
-## OpenClawを「Claude Code / Codexっぽいもの」と誤解しない
+## OpenClawとは何かを、まず正しく捉える
 
 この資料で扱うこと：
 
 1. OpenClawとChatGPTの違い
-2. OpenClawとCoding Agentの違い
-3. OpenClawが「AI本体」ではなく「Gateway」であること
-4. セッション、メモリ、チャネル、ツールの考え方
-5. 常駐AI秘書としての使いどころ
+2. OpenClawが「AI本体」ではなく「Gateway」であること
+3. セッション、メモリ、チャネル、ツールの考え方
+4. 常駐AI秘書として何ができるのか
+5. 既存のCoding Agentとの位置づけの違い
+6. 安全に使うための注意点
 
-<div class="message">OpenClawの本質は、Toolsを使えることではなく、AIを普段のチャット空間に常駐させるGatewayであること。</div>
+<div class="message">OpenClawは、AIに質問するアプリではなく、AIエージェントを自分の環境に常駐させる基盤。</div>
 
 ---
 
@@ -62,14 +63,14 @@ style: |
 
 OpenClawは、普段使っているチャットアプリなどからAIに指示し、設定した権限や連携先に応じて作業させるための基盤。
 
-ただし、ここで大事なのは「ファイル編集やコマンド実行ができる」ことだけではない。
+扱えるものの例：
 
-OpenClawは、AIを以下のように扱う。
-
-- 普段のチャットにいる
-- 継続的な文脈を持つ
-- 必要な外部サービスとつながる
-- 自分の環境で動く
+- チャットアプリからの指示
+- メール、カレンダー
+- ブラウザ
+- ファイル操作
+- 定期実行
+- ツール連携
 
 <div class="message">ChatGPTが「AIと会話する場所」なら、OpenClawは「自分の環境に常駐するAI秘書を作る仕組み」。</div>
 
@@ -101,59 +102,6 @@ OpenClawは、AIを以下のように扱う。
 </div>
 
 <div class="message">ChatGPTは「会話・作業支援のサービス」。OpenClawは「実行型アシスタントを自分の環境に置く基盤」。</div>
-
----
-
-# Coding Agentとの違い
-
-## Toolsを使えること自体は差別化ポイントではない
-
-Claude CodeやCodexも、指示に応じてファイルを読み、編集し、コマンドを実行できる。
-
-したがって、OpenClawを次のように説明すると弱い。
-
-> MCPやToolsやSkillsを使って、ファイル編集やコマンド実行ができます
-
-それだけだと、聞き手は自然にこう感じる。
-
-> それ、Claude CodeやCodexでよくない？
-
-<div class="message">OpenClawの違いは「何が実行できるか」より、「どこに常駐し、どこから呼ばれ、どの文脈を持つか」。</div>
-
----
-
-# OpenClawの位置づけ
-
-## Coding Agentではなく、Personal Assistant Gateway
-
-<div class="two-columns">
-<div class="card">
-
-## Claude Code / Codex
-
-開発者が起動して使う、開発作業の相棒。
-
-- リポジトリ中心
-- CLI / IDE中心
-- コード編集・テストが主戦場
-- 人間が作業中に呼び出す
-
-</div>
-<div class="card">
-
-## OpenClaw
-
-普段のチャット空間にいる、常駐AI秘書。
-
-- チャットチャネル中心
-- Gateway中心
-- セッションとメモリを持つ
-- 必要なときに呼び出される
-
-</div>
-</div>
-
-<div class="message">OpenClawは「開発環境の中のAI」ではなく、「日常のチャット空間にいるAI」。</div>
 
 ---
 
@@ -274,15 +222,39 @@ OpenClawのメモリは、エージェントが作業文脈を引き継ぐため
 
 # ツールとスキル
 
-## 差別化要素ではなく、Gatewayの先につながる作業手段
+## AIに「できること」を与える仕組み
 
 OpenClawでも、AIにただ返答させるだけでなく、ツールやスキルを通じて作業手段を与える。
 
-ただし、これはOpenClaw固有の強みというより、AIエージェント全般に共通する要素。
+例：
 
-OpenClawで大事なのは、これらを**常駐Gateway・チャネル・セッション・メモリ**の文脈で扱えること。
+- ファイルを読む
+- ブラウザを扱う
+- メールやカレンダーを見る
+- 外部APIと連携する
+- 定期的な処理を行う
 
-<div class="message">ToolsやSkillsは「手足」。OpenClawの本体は、それらを普段のチャット空間につなぐGateway。</div>
+<div class="message">LLMの知能に、現実の作業環境へ触れる手段を足すのがOpenClawの考え方。</div>
+
+---
+
+# 既存のCoding Agentとの位置づけ
+
+## 似ている部分はあるが、主役が違う
+
+Claude CodeやCodexも、ファイル編集やコマンド実行ができる。
+
+その意味で、**ツール実行という部品だけを見ると似ている**。
+
+ただしOpenClawの主役は、コード編集そのものではなく、以下を組み合わせてAIアシスタントを常駐させること。
+
+- チャットチャネル
+- Gateway
+- セッション
+- メモリ
+- ツール / スキル
+
+<div class="message">Coding Agentは「開発作業の相棒」。OpenClawは「普段のチャット空間にいるAIアシスタント基盤」。</div>
 
 ---
 
@@ -369,9 +341,9 @@ OpenClawは、設定次第でメール、カレンダー、ファイル、ブラ
 ## OpenClawとは何か
 
 1. OpenClawは、AIに質問するツールというより、**常駐するAIエージェントを作るGateway**
-2. Claude Code / Codexとの違いは、ファイル編集やコマンド実行ではなく、**チャット空間に常駐する体験**
+2. ChatGPTとの違いは、完成済みAIサービスではなく、**自分の環境に合わせて組み立てるAI作業場**であること
 3. 中心には**Gateway**があり、チャネル、セッション、ルーティング、ツール実行をつなぐ
-4. 普段のチャットアプリや複数の入口から使える
+4. Coding Agentとは似ている部品もあるが、主役はコード編集ではなく**チャット空間に常駐するAIアシスタント体験**
 5. 実際の作業環境に触れるため、権限と安全設計が重要
 
-<div class="message">OpenClawは、開発環境の中のAIではなく、普段のチャット空間に常駐するAI秘書を作るための仕組み。</div>
+<div class="message">OpenClawは、普段のチャット空間に常駐するAI秘書を、自分の環境で作るための仕組み。</div>
