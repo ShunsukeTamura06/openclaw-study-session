@@ -1,0 +1,19 @@
+flowchart LR
+    U[ユーザー] --> C[チャネル<br/>Chat / Web UI / CLI]
+    C <--> G[OpenClaw<br/>Gateway]
+    G --> S[セッション管理]
+    G --> A[AIエージェント]
+    A --> M[メモリ]
+    A --> T[ツール / スキル]
+    A --> L[LLM API]
+    T --> X[社内サービス<br/>GitLab / 共有フォルダ<br/>Obsidian など]
+
+    classDef external fill:#e2e8f0,stroke:#475569,color:#1f2937
+    classDef channel  fill:#dbeafe,stroke:#2563eb,color:#0f172a
+    classDef gateway  fill:#fcd34d,stroke:#b45309,color:#0f172a,stroke-width:3px,font-weight:bold
+    classDef internal fill:#c7d2fe,stroke:#4338ca,color:#1f2937
+
+    class U,X external
+    class C channel
+    class G gateway
+    class S,A,M,T,L internal
